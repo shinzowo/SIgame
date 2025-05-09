@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "menu.h"
 #include "playerSetup.h"
+#include "gameUI.h"
 
 #include <QStackedWidget>
 
@@ -23,9 +24,12 @@ private:
     Ui::MainWindow *ui;
     MainMenuWidget *menuWidget;
     PlayerSetupWidget *setupWidget;
+    GameWidget *gameWidget;
     QStackedWidget *stackedWidget;
 private slots:
     void showPlayerSetup();
+    void startGame(QStringList playerNames);
+    void backToMenu();
 
 };
 #endif // MAINWINDOW_H
