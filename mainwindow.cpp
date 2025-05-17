@@ -24,18 +24,24 @@ MainWindow::MainWindow(QWidget *parent)
     connect(menuWidget, &MainMenuWidget::startGameRequested, this, &MainWindow::showPlayerSetup);
     connect(menuWidget, &MainMenuWidget::exitRequested, this, &MainWindow::close);
     connect(setupWidget, &PlayerSetupWidget::playersReady, this, &MainWindow::startGame);
-    connect(gameWidget, &GameWidget::backToMenuRequested, this, &MainWindow::backToMenu);
-
+    //connect(gameWidget, &GameWidget::backToMenuRequested, this, &MainWindow::backToMenu);
 }
 
 void MainWindow::showPlayerSetup() {
     stackedWidget->setCurrentWidget(setupWidget);
 }
 
-void MainWindow::startGame(QStringList playerNames) {
+void MainWindow::startGame(const QStringList playerNames, const QString& filePath) {
     // Можно передать список игроков в GameWidget, если нужно
     // gameWidget->initPlayers(playerNames); // если реализовано
+    QList<Player> players;
+        for (const QString& name : playerNames) {
+            players.append(Player(name));
+        }
+    gameLogic = new GameLogic(this);
+    gameLogic->startGame(players, filePath);
 
+    gameWidget->setLogic(gameLogic);
     stackedWidget->setCurrentWidget(gameWidget);
 }
 

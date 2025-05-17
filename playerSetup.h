@@ -14,7 +14,7 @@ public:
     explicit PlayerSetupWidget(QWidget *parent = nullptr);
 
 signals:
-    void playersReady(const QStringList &names);
+    void playersReady(const QStringList &names, const QString &loadedFilePath);
     void questionsLoaded(const QString &filePath);
 
 private slots:

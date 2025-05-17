@@ -1,27 +1,43 @@
-#ifndef GAMEUI_H
-#define GAMEUI_H
+#ifndef GAMEWIDGET_H
+#define GAMEWIDGET_H
+
 #include <QWidget>
 #include <QGridLayout>
 #include <QPushButton>
-#include <QLabel>
-#include <QMap>
+#include "gamelogic.h"
+#include "QLabel"
 
 class GameWidget : public QWidget {
     Q_OBJECT
 
 public:
-    explicit GameWidget(QWidget *parent = nullptr);
-    void setThemesAndCosts(const QStringList &themes, const QList<int> &costs);
-    void disableQuestion(int themeIndex, int cost);
+    explicit GameWidget(QWidget* parent = nullptr);
 
+    void setLogic(GameLogic* logic);
+    void displayRound(int roundIndex);
 
-signals:
-    void questionSelected(int themeIndex, int cost);
-    void backToMenuRequested();
+private slots:
+    void handleQuestionClicked();
 
 private:
-    QGridLayout *gridLayout;
-    QMap<QPushButton*, QPair<int, int>> buttonMap; // кнопка → (тема, цена)
-    QLabel *infoLabel;
+    GameLogic* m_logic = nullptr;
+    QGridLayout* m_gridLayout = nullptr;
+    QVector<QVector<QPushButton*>> questionButtons;
+
+    void clearGrid();
+
+    Question currentQuestion;
+    QList<Player> players;
+    QVector<bool> hasAttempted;
+
+    QHBoxLayout* playersLayout = nullptr;  // новый лэйаут для игроков
+
+    QVector<QLabel*> playerNameLabels;
+    QVector<QLabel*> playerScoreLabels;
+
+    void updatePlayerDisplay();
+
 };
-#endif // GAMEUI_H
+
+#endif // GAMEWIDGET_H
+

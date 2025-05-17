@@ -29,6 +29,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         playerSetup.cpp
         gameUI.h
         gameUI.cpp
+        GameLogic.h
+        GameLogic.cpp
+        Player.h
+        Player.cpp
+        QuestionPackage.h
+        QuestionPackage.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Svoya_Igra APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

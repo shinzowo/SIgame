@@ -5,6 +5,7 @@
 #include "menu.h"
 #include "playerSetup.h"
 #include "gameUI.h"
+#include "GameLogic.h"
 
 #include <QStackedWidget>
 
@@ -25,10 +26,11 @@ private:
     MainMenuWidget *menuWidget;
     PlayerSetupWidget *setupWidget;
     GameWidget *gameWidget;
+    GameLogic *gameLogic;
     QStackedWidget *stackedWidget;
 private slots:
     void showPlayerSetup();
-    void startGame(QStringList playerNames);
+    void startGame(const QStringList playerNames, const QString& filePath);
     void backToMenu();
 
 };

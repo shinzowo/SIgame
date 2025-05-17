@@ -68,5 +68,5 @@ void PlayerSetupWidget::onStartClicked() {
         return;
     }
 
-    emit playersReady(names);
+    emit playersReady(names, loadedFilePath);
 }
