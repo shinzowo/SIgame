@@ -29,13 +29,17 @@ private:
     Question currentQuestion;
     QList<Player> players;
     QVector<bool> hasAttempted;
+    QPushButton* currentQuestionButton = nullptr;
 
     QHBoxLayout* playersLayout = nullptr;  // новый лэйаут для игроков
-
+    int currentPlayerIndex = -1;
     QVector<QLabel*> playerNameLabels;
     QVector<QLabel*> playerScoreLabels;
 
-    void updatePlayerDisplay();
+    void updatePlayerScores();
+    void askWhoWillAnswer();
+    void askPlayerToAnswer();
+
 
 };
 

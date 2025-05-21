@@ -59,12 +59,17 @@ QList<GameRound> QuestionPackage::getRounds() const {
     return rounds;
 }
 
-GameRound QuestionPackage::getRound(int index) const {
-    if (index >= 0 && index < rounds.size())
-        return rounds[index];
-    return GameRound(); // Пустой раунд
+GameRound& QuestionPackage::getRound(int index) {
+    return rounds[index];
+}
+
+const GameRound& QuestionPackage::getRound(int index) const {
+    return rounds[index];
 }
 
 int QuestionPackage::getRoundCount() const {
     return rounds.size();
 }
+
+
+

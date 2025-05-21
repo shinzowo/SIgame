@@ -10,6 +10,7 @@ struct Question {
     QString text;
     QString answer;
     QString type = "standard"; // standard, auction, bag, final
+    bool answered = false;
 };
 
 // Тема
@@ -32,8 +33,11 @@ public:
     bool loadFromFile(const QString &filePath);
 
     QList<GameRound> getRounds() const;
-    GameRound getRound(int index) const;
+    GameRound& getRound(int index); // для изменения
+    const GameRound& getRound(int index) const; // для чтения
     int getRoundCount() const;
+
+
 
 private:
     QList<GameRound> rounds;

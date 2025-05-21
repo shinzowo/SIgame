@@ -64,3 +64,26 @@ bool GameLogic::isGameOver() const {
     return m_currentRoundIndex >= m_package.getRoundCount() - 1;
 }
 
+void GameLogic::markQuestionAnswered(int themeIndex, int questionIndex) {
+    if (themeIndex >= 0 && themeIndex < m_package.getRound(m_currentRoundIndex).themes.size()) {
+        Theme& theme = m_package.getRound(m_currentRoundIndex).themes[themeIndex];
+        if (questionIndex >= 0 && questionIndex < theme.questions.size()) {
+            theme.questions[questionIndex].answered = true;
+        }
+    }
+}
+
+
+bool GameLogic::allQuestionsAnswered() const {
+    const GameRound& round = m_package.getRound(m_currentRoundIndex);
+    for (const auto& theme : round.themes) {
+        for (const auto& q : theme.questions) {
+            if (!q.answered) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+

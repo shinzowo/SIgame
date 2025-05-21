@@ -21,43 +21,54 @@ void GameWidget::setLogic(GameLogic* logic) {
     m_logic = logic;
     players = m_logic->getPlayers();
 
-    // Создаём QLabel для игроков (имя и очки)
-        playerNameLabels.clear();
-        playerScoreLabels.clear();
+    playerNameLabels.clear();
+    playerScoreLabels.clear();
+    // playerButtons.clear(); // больше не используется
 
-        // Очистим предыдущие виджеты в playersLayout (если есть)
+    if (playersLayout) {
         QLayoutItem* child;
         while ((child = playersLayout->takeAt(0)) != nullptr) {
             delete child->widget();
             delete child;
         }
+    } else {
+        playersLayout = new QHBoxLayout();
+        static_cast<QVBoxLayout*>(layout())->addLayout(playersLayout);
+    }
 
-        for (const Player& p : players) {
-            QVBoxLayout* pl = new QVBoxLayout();
+    for (int i = 0; i < players.size(); ++i) {
+        const Player& p = players[i];
 
-            QLabel* nameLabel = new QLabel(p.getName());
-            nameLabel->setAlignment(Qt::AlignCenter);
-            playerNameLabels.append(nameLabel);
+        QVBoxLayout* pl = new QVBoxLayout();
 
-            QLabel* scoreLabel = new QLabel(QString::number(p.getScore()));
-            scoreLabel->setAlignment(Qt::AlignCenter);
-            playerScoreLabels.append(scoreLabel);
+        QLabel* nameLabel = new QLabel(p.getName());
+        nameLabel->setAlignment(Qt::AlignCenter);
+        nameLabel->setStyleSheet("padding: 6px; border: 1px solid gray;");
 
-            pl->addWidget(nameLabel);
-            pl->addWidget(scoreLabel);
+        // Можно сохранить указатель, чтобы позже подсвечивать активного игрока
+        playerNameLabels.append(nameLabel);
 
-            playersLayout->addLayout(pl);
-        }
+        QLabel* scoreLabel = new QLabel(QString::number(p.getScore()));
+        scoreLabel->setAlignment(Qt::AlignCenter);
+        playerScoreLabels.append(scoreLabel);
+
+        pl->addWidget(nameLabel);
+        pl->addWidget(scoreLabel);
+
+        playersLayout->addLayout(pl);
+    }
 
     displayRound(m_logic->getCurrentRoundIndex());
 }
 
-void GameWidget::updatePlayerDisplay() {
-    // Обновляем очки игроков на экране
-    for (int i = 0; i < players.size(); ++i) {
+
+void GameWidget::updatePlayerScores() {
+    players = m_logic->getPlayers();
+    for (int i = 0; i < players.size() && i < playerScoreLabels.size(); ++i) {
         playerScoreLabels[i]->setText(QString::number(players[i].getScore()));
     }
 }
+
 
 
 void GameWidget::displayRound(int roundIndex) {
@@ -96,7 +107,7 @@ void GameWidget::displayRound(int roundIndex) {
             questionButtons[row].append(btn);
         }
     }
-    updatePlayerDisplay();
+    updatePlayerScores();
 }
 
 
@@ -117,24 +128,103 @@ void GameWidget::clearGrid() {
 void GameWidget::handleQuestionClicked() {
     if (!m_logic) return;
 
-        QPushButton* btn = qobject_cast<QPushButton*>(sender());
-        if (!btn) return;
+    QPushButton* btn = qobject_cast<QPushButton*>(sender());
+    if (!btn) return;
 
-        int themeIndex = btn->property("theme").toInt();
-        int questionIndex = btn->property("index").toInt();
+    int themeIndex = btn->property("theme").toInt();
+    int questionIndex = btn->property("index").toInt();
 
-        Question q = m_logic->getQuestion(themeIndex, questionIndex);
+    currentQuestion = m_logic->getQuestion(themeIndex, questionIndex);
+    currentQuestionButton = btn;
 
-        // Показываем вопрос
-        QString message = QString("Вопрос на %1 очков:\n\n%2").arg(q.cost).arg(q.text);
-        QMessageBox::information(this, "Вопрос", message);
+    // Показываем текст вопроса
+    QMessageBox::information(this, "Вопрос", QString("На %1 очков:\n\n%2")
+                             .arg(currentQuestion.cost).arg(currentQuestion.text));
 
-        // Временно: просто добавим очки первому игроку как правильно ответившему
-        m_logic->applyAnswer(0, true, q.cost);
+    // Сброс попыток
+    hasAttempted = QVector<bool>(players.size(), false);
 
-        btn->setEnabled(false);
-        btn->setText("—");
+    // Переходим к выбору игрока
+    askWhoWillAnswer();
+    m_logic->markQuestionAnswered(themeIndex,questionIndex);
+    if(m_logic->allQuestionsAnswered()){
+        m_logic->nextRound();
+        displayRound(m_logic->getCurrentRoundIndex());
+    }
 }
+
+void GameWidget::askWhoWillAnswer() {
+    QDialog dialog(this);
+    dialog.setWindowTitle("Кто будет отвечать?");
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+
+    QLabel* label = new QLabel(currentQuestion.text+"\n\n"+"Выберите игрока, кто будет отвечать:");
+    layout->addWidget(label);
+
+    QVector<QPushButton*> choiceButtons;
+
+    for (int i = 0; i < players.size(); ++i) {
+        if (!hasAttempted[i]) {
+            QPushButton* btn = new QPushButton(players[i].getName());
+            layout->addWidget(btn);
+            connect(btn, &QPushButton::clicked, [&dialog, this, i]() {
+                currentPlayerIndex = i;
+                dialog.accept();
+            });
+            choiceButtons.append(btn);
+        }
+    }
+
+    QPushButton* passBtn = new QPushButton("Никто не хочет отвечать");
+    layout->addWidget(passBtn);
+    connect(passBtn, &QPushButton::clicked, [&dialog]() {
+        dialog.reject();
+    });
+
+    int result = dialog.exec();
+
+    if (result == QDialog::Accepted) {
+
+        askPlayerToAnswer();
+    } else {
+        // Никто не хочет отвечать
+        currentQuestionButton->setEnabled(false);
+        currentQuestionButton->setText("—");
+
+    }
+}
+
+
+void GameWidget::askPlayerToAnswer() {
+    const QString& name = players[currentPlayerIndex].getName();
+    QString answer = QInputDialog::getText(this, "Ответ", currentQuestion.text+"\n\n" + name + ", введите ваш ответ:").trimmed();
+    QString correctAnswer = currentQuestion.answer.trimmed();
+
+    bool correct = answer.compare(correctAnswer, Qt::CaseInsensitive) == 0;
+
+    if (correct) {
+        QMessageBox::information(this, "Верно", "Ответ правильный! Баллы начислены.");
+        m_logic->applyAnswer(currentPlayerIndex, true, currentQuestion.cost);
+        updatePlayerScores();
+        currentQuestionButton->setEnabled(false);
+        currentQuestionButton->setText("—");
+
+    } else {
+        QMessageBox::warning(this, "Неверно", "Ответ неправильный. Баллы сняты.");
+        m_logic->applyAnswer(currentPlayerIndex, false, currentQuestion.cost);
+        updatePlayerScores();
+        hasAttempted[currentPlayerIndex] = true;
+
+        askWhoWillAnswer();  // Даем другим игрокам шанс
+    }
+}
+
+
+
+
+
+
+
 
 
 

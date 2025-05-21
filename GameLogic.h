@@ -27,6 +27,8 @@ public:
     void applyAnswer(int playerIndex, bool correct, int cost);
     bool isFinalRound() const;
     bool isGameOver() const;
+    void markQuestionAnswered(int themeIndex, int questionIndex);
+    bool allQuestionsAnswered() const;
 
 private:
     QList<Player> m_players;
